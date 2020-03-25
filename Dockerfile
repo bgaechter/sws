@@ -1,12 +1,11 @@
-FROM golang:1.14-alpine AS builder
+FROM golang:1.14-buster AS builder
 WORKDIR /go/src/app
 COPY . .
 
 RUN go get -d -v ./...
 RUN go install -v ./...
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
+RUN go build -o app .
 
-FROM golang:1.14-alpine
-WORKDIR /go/src/app/
-COPY --from=builder /go/src/app .
-CMD ["./app"]
+FROM gcr.io/distroless/cc-debian10
+COPY --from=builder /go/src/app /
+CMD ["/app"]
