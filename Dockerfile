@@ -1,11 +1,15 @@
-FROM golang:1.14-buster AS builder
+FROM golang:1.19 as build
+
 WORKDIR /go/src/app
 COPY . .
 
-RUN go get -d -v ./...
-RUN go install -v ./...
-RUN go build -o app .
+RUN go mod download
+RUN go vet -v
+RUN go test -v
 
-FROM gcr.io/distroless/cc-debian10
-COPY --from=builder /go/src/app /
+RUN CGO_ENABLED=0 go build -o /go/bin/app
+
+FROM gcr.io/distroless/static-debian11
+
+COPY --from=build /go/bin/app /
 CMD ["/app"]
